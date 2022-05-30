@@ -15,30 +15,29 @@ class Analyzer:
         action_methods = [ item.replace(prefix,'') for item in dir(self) if item.startswith(prefix) and callable(getattr(self,item)) ]
 
         parser = argparse.ArgumentParser(description='Log Analyzer')
-        parser.add_argument("-a","--action",nargs=1,required=True,dest='action_name',choices=action_methods)
+        parser.add_argument("-a","--action",required=True,dest='action_name',choices=action_methods)
 
         parser.add_argument("-o","--output",nargs=1,dest='output_json',required=True)
         parser.add_argument("-i","--input",nargs='+',dest='input',required=True,action='append',help='input files and/or directories')
 
         val = parser.parse_args()
-        print(val.action_name)
-        print(val.input)
-        print(dir(val))
-        #if parser.action is None:
-        #    print("aaaaa")
+        print(val)
+
+        getattr(self,prefix+val.action_name)(self)
 
     def action_most_freq_ip(self,args):
         "compute the most frequent ip"
-        pass
+        print("A")
+
     def action_last_freq_ip(self,args):
         "compute the least frequent ip"
-        pass
+        print("B")
     def action_events_per_second(self,args):
         "compute the events per second ratio"
-        pass
+        print("C")
     def action_total_bytes(self,args):
         "compute the total bytes transferred"
-        pass
+        print("D")
 
 i = Analyzer(sys.argv)
 
