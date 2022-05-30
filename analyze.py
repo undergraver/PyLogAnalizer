@@ -15,14 +15,17 @@ class Analyzer:
         action_methods = [ item.replace(prefix,'') for item in dir(self) if item.startswith(prefix) and callable(getattr(self,item)) ]
 
         parser = argparse.ArgumentParser(description='Log Analyzer')
-        subparser = parser.add_subparsers(dest='action')
-        for action in action_methods:
-            subparser.add_parser(action,help=getattr(self,prefix+action).__doc__)
+        parser.add_argument("-a","--action",nargs=1,required=True,dest='action_name',choices=action_methods)
 
         parser.add_argument("-o","--output",nargs=1,dest='output_json',required=True)
-        parser.add_argument("input",nargs='+',help='input files and/or directories')
+        parser.add_argument("-i","--input",nargs='+',dest='input',required=True,action='append',help='input files and/or directories')
 
-        parser.parse_args(['--help'])
+        val = parser.parse_args()
+        print(val.action_name)
+        print(val.input)
+        print(dir(val))
+        #if parser.action is None:
+        #    print("aaaaa")
 
     def action_most_freq_ip(self,args):
         "compute the most frequent ip"
