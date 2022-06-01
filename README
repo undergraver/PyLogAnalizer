@@ -1,0 +1,106 @@
+Log Analyzer.
+
+Here are some examples:
+
+1. Input is a directory (named 1)
+
+~/Analyzer> ./analyze.py -i 1 -o test.json -a total_bytes
+~/analyzer> cat test.json
+{
+    "results": [
+        {
+            "bytecount": 74633,
+            "file": "1/2/t.log"
+        },
+        {
+            "bytecount": 87089,
+            "file": "1/h.log"
+        },
+        {
+            "bytecount": 4283,
+            "file": "1/small.log"
+        }
+    ]
+}~/analyzer>
+
+2. Input is a list of files
+
+~/analyzer> ./analyze.py -i 1/2/t.log 1/h.log  -o test.json -a total_bytes
+~/analyzer> cat test.json
+{
+    "results": [
+        {
+            "bytecount": 74633,
+            "file": "1/2/t.log"
+        },
+        {
+            "bytecount": 87089,
+            "file": "1/h.log"
+        }
+    ]
+}~/analyzer>
+
+3. Finding the most frequent ip
+
+~/analyzer> ./analyze.py -i 1/2/t.log 1/h.log  -o test.json -a most_freq_ip
+~/analyzer> cat test.json
+{
+    "results": [
+        {
+            "ip": "210.8.79.228",
+            "count": 7,
+            "file": "1/2/t.log"
+        },
+        {
+            "ip": "10.105.21.199",
+            "count": 9,
+            "file": "1/h.log"
+        }
+    ]
+}~/analyzer>
+
+4. Displaying the help
+
+#./analyze.py
+
+
+usage: analyze.py [-h] -a
+                  {events_per_second,least_freq_ip,most_freq_ip,nothing,total_bytes}
+                  -o OUTPUT_JSON -i INPUT [INPUT ...]
+analyze.py: error: the following arguments are required: -a/--action, -o/--output, -i/--input
+#./analyze.py -h
+
+usage: analyze.py [-h] -a
+                  {events_per_second,least_freq_ip,most_freq_ip,nothing,total_bytes}
+                  -o OUTPUT_JSON -i INPUT [INPUT ...]
+
+Log Analyzer
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -a {events_per_second,least_freq_ip,most_freq_ip,nothing,total_bytes}, --action {events_per_second,least_freq_ip,most_freq_ip,nothing,total_bytes}
+  -o OUTPUT_JSON, --output OUTPUT_JSON
+  -i INPUT [INPUT ...], --input INPUT [INPUT ...]
+                        input files and/or directories
+
+events_per_second - compute the events per second ratio
+least_freq_ip - compute the least frequent ip
+most_freq_ip - compute the most frequent ip
+nothing - do nothing
+total_bytes - compute the total bytes transferred
+#
+
+5. An action can be added as simple as defining a class method with action_ prefix together with the documentation that is automatically displayed when passing -h
+
+<<<<<<<<<<
+    def action_nothing(self,args):
+        "do nothing"
+        return { "nothing" : 0 }
+<<<<<<<<<<
+
+~/analyzer> ./analyze.py -i 1/2/t.log 1/h.log  -o test.json -a nothing
+~/analyzer> cat test.json
+{
+    "nothing": 0
+}~/analyzer>
+
