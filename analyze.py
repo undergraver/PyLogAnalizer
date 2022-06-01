@@ -12,9 +12,16 @@ class Analyzer:
     def __init__(self, args):
 
         prefix='action_'
-        action_methods = [ item.replace(prefix,'') for item in dir(self) if item.startswith(prefix) and callable(getattr(self,item)) ]
+        methods_name = [ item for item in dir(self) if item.startswith(prefix) and callable(getattr(self,item)) ]
+        action_methods = [ item.replace(prefix,'') for item in methods_name ]
+        help_text = [ getattr(self,item).__doc__ for item in methods_name ]
+        #print(help_text)
+        action_help_map = { action_methods[i]:help_text[i] for i in range(len(action_methods)) }
+        #print(action_help_map)
+        help_for_each = [ am + " - " + action_help_map[am] for am in action_methods ]
+        #print('\n'.join(help_for_each))
 
-        parser = argparse.ArgumentParser(description='Log Analyzer')
+        parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter,description='Log Analyzer',epilog="\n".join(help_for_each))
         parser.add_argument("-a","--action",required=True,dest='action_name',choices=action_methods)
 
         parser.add_argument("-o","--output",nargs=1,dest='output_json',required=True)
@@ -24,6 +31,9 @@ class Analyzer:
         print(val)
 
         getattr(self,prefix+val.action_name)(self)
+
+    # to add a new action follow the patter below
+
 
     def action_most_freq_ip(self,args):
         "compute the most frequent ip"
@@ -38,6 +48,9 @@ class Analyzer:
     def action_total_bytes(self,args):
         "compute the total bytes transferred"
         print("D")
+    def action_nothing(self,args):
+        "do nothing"
+        print("E")
 
 i = Analyzer(sys.argv)
 
