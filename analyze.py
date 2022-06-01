@@ -133,7 +133,32 @@ class Analyzer:
 
     def action_events_per_second(self,args):
         "compute the events per second ratio"
-        print("C")
+        results = []
+        for f in self.files:
+            self.start_time = 1E+22 # more than 64 bit value
+            self.end_time = 0
+            self.request_count = 0
+            info_map = self.read_line_by_line(f,self.compute_frequency)
+            info_map["file"] = f
+            results.append(info_map)
+        result_json = { "results" : results }
+        return result_json
+
+    def compute_frequency(self,split_line):
+        if split_line == None:
+            difftime = self.end_time - self.start_time
+            if difftime <= 0.0:
+                difftime = 0.001 # cannot divide by 0
+            frequency = self.request_count / difftime
+            return { "frequency" : frequency }
+
+        tval = float(split_line[self.__class__.TIMESTAMP_INDEX])
+        if tval < self.start_time:
+            self.start_time = tval
+        if tval > self.end_time:
+            self.end_time = tval
+
+        self.request_count += 1
 
     def action_total_bytes(self,args):
         "compute the total bytes transferred"
@@ -155,7 +180,7 @@ class Analyzer:
 
     def action_nothing(self,args):
         "do nothing"
-        print("E")
+        return { "nothing" : 0 }
 
 i = Analyzer(sys.argv)
 sys.exit(0)
