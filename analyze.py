@@ -7,8 +7,11 @@ import os
 pattern = re.compile('\s+')
 
 class Analyzer:
+    TIMESTAMP_INDEX=0
+    CLIENT_IP_INDEX=2
+    HEADER_SIZE_INDEX=1
+    RESPONSE_SIZE_INDEX=4
     def __init__(self, args):
-
         prefix='action_'
         methods_name = [ item for item in dir(self) if item.startswith(prefix) and callable(getattr(self,item)) ]
         action_methods = [ item.replace(prefix,'') for item in methods_name ]
@@ -27,9 +30,12 @@ class Analyzer:
 
         val = parser.parse_args()
         self.prepare_list(val.input)
-        print(self.files)
+        self.json=val.output_json[0]
+        #print(self.files)
+        #print(self.json)
 
-        getattr(self,prefix+val.action_name)(self)
+        json_info = getattr(self,prefix+val.action_name)(self)
+        print(json_info)
 
     def prepare_list(self,input_array):
         self.files = []
@@ -54,27 +60,104 @@ class Analyzer:
 
         return ret
 
+    def read_line_by_line(self,fname,method):
+        f = open(fname,'rt')
+        while True:
+            line = f.readline()
+            if not line:
+                return method(None) # the end of file
+                break
+            line = line.strip()
+            if len(line) == 0:
+                continue
+            array = re.split(pattern,line.strip())
+            method(array)
+        f.close()
 
     # to add a new action follow the patter below
     def action_most_freq_ip(self,args):
         "compute the most frequent ip"
-        print("A")
+        results = []
+        for f in self.files:
+            self.ip_count_map = {}
+            info_map = self.read_line_by_line(f,self.find_most_freq_ip)
+            info_map["file"] = f
+            results.append(info_map)
+        result_json = { "results" : results }
+        return result_json
 
-    def action_last_freq_ip(self,args):
+    def find_most_freq_ip(self,split_line):
+        if split_line == None:
+            # EOF, return the result
+            count = 0
+            ip = '0.0.0.0'
+            for k,v in self.ip_count_map.items():
+                if v > count:
+                    count = v
+                    ip = k
+            return { "ip" : ip, "count" : count }
+
+        client_ip = split_line[self.__class__.CLIENT_IP_INDEX]
+        if client_ip in self.ip_count_map:
+            self.ip_count_map[client_ip] += 1
+        else:
+            self.ip_count_map[client_ip] = 1
+
+    def action_least_freq_ip(self,args):
         "compute the least frequent ip"
-        print("B")
+        results = []
+        for f in self.files:
+            self.ip_count_map = {}
+            info_map = self.read_line_by_line(f,self.find_least_freq_ip)
+            info_map["file"] = f
+            results.append(info_map)
+        result_json = { "results" : results }
+        return result_json
+
+    def find_least_freq_ip(self,split_line):
+        if split_line == None:
+            # EOF, return the result
+            count = None
+            ip = '0.0.0.0'
+            for k,v in self.ip_count_map.items():
+                if count is None or v < count:
+                    count = v
+                    ip = k
+            return { "ip" : ip, "count" : count }
+
+        client_ip = split_line[self.__class__.CLIENT_IP_INDEX]
+        if client_ip in self.ip_count_map:
+            self.ip_count_map[client_ip] += 1
+        else:
+            self.ip_count_map[client_ip] = 1
+
     def action_events_per_second(self,args):
         "compute the events per second ratio"
         print("C")
+
     def action_total_bytes(self,args):
         "compute the total bytes transferred"
-        print("D")
+        results = []
+        for f in self.files:
+            self.bytecount = 0
+            info_map = self.read_line_by_line(f,self.add_total_bytes_transferred)
+            info_map["file"] = f
+            results.append(info_map)
+        result_json = { "results" : results }
+        return result_json
+
+    def add_total_bytes_transferred(self,split_line):
+        if split_line == None:
+            return { "bytecount" : self.bytecount }
+        header_size = int(split_line[self.__class__.HEADER_SIZE_INDEX])
+        response_size = int(split_line[self.__class__.RESPONSE_SIZE_INDEX])
+        self.bytecount += header_size + response_size
+
     def action_nothing(self,args):
         "do nothing"
         print("E")
 
 i = Analyzer(sys.argv)
-
 sys.exit(0)
 
 
@@ -82,16 +165,3 @@ argparser = argparse.ArgumentParser(description='Log processor')
 argparser.add_argument
 
 
-while True:
-    line = f.readline()
-    if not line:
-        break
-    line = line.strip()
-    if len(line) == 0:
-        continue
-    array = re.split(pattern,line.strip())
-    new_count=len(array)
-    if count is None and count != new_count:
-        print(new_count)
-        count=new_count
-f.close()
