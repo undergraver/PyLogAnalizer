@@ -2,11 +2,9 @@
 import re
 import argparse
 import sys
+import os
 
 pattern = re.compile('\s+')
-
-f = open('access.log','rt')
-count=None
 
 class Analyzer:
     def __init__(self, args):
@@ -28,13 +26,36 @@ class Analyzer:
         parser.add_argument("-i","--input",nargs='+',dest='input',required=True,action='append',help='input files and/or directories')
 
         val = parser.parse_args()
-        print(val)
+        self.prepare_list(val.input)
+        print(self.files)
 
         getattr(self,prefix+val.action_name)(self)
 
+    def prepare_list(self,input_array):
+        self.files = []
+        for arr in input_array:
+            for item in arr:
+                if os.path.isfile(item):
+                    self.files.append(item)
+                elif os.path.isdir(item):
+                    # list all dir contents
+                    self.files += Analyzer.get_list_recursively(item)
+    @staticmethod
+    def get_list_recursively(path):
+        ret = []
+        if os.path.isdir(path):
+            items = os.listdir(path)
+            for item in items:
+                new_path = path+os.sep+item
+                if os.path.isdir(new_path):
+                    ret += Analyzer.get_list_recursively(new_path)
+                elif os.path.isfile(new_path):
+                    ret.append(new_path)
+
+        return ret
+
+
     # to add a new action follow the patter below
-
-
     def action_most_freq_ip(self,args):
         "compute the most frequent ip"
         print("A")
