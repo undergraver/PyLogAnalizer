@@ -3,6 +3,7 @@ import re
 import argparse
 import sys
 import os
+import json
 
 pattern = re.compile('\s+')
 
@@ -35,7 +36,11 @@ class Analyzer:
         #print(self.json)
 
         json_info = getattr(self,prefix+val.action_name)(self)
-        print(json_info)
+        #print(json_info)
+
+        #write json data to file
+        with open(self.json,'wt') as f:
+            json.dump(json_info,f, indent=4)
 
     def prepare_list(self,input_array):
         self.files = []
